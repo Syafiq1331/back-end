@@ -48,6 +48,6 @@ app.use('/notes', ensureWhatsAppIsLoaded, notesRouter);
 app.use('/token', ensureWhatsAppIsLoaded, tokensRouter);
 app.use('/customer', ensureWhatsAppIsLoaded, customerRouter);
 
-whatsAppMiddleware.bindWhatsApp()
+globalThis.serviceState.whatsAppBot.instance = whatsAppMiddleware.bindWhatsApp()
 
 module.exports = { app, serviceState };
