@@ -57,9 +57,23 @@ async function bindWhatsApp() {
         // sock.sendMessage(m.messages[0].key.remoteJid!, { text: 'Hello there!' }).then((a) => {
         // })
     })
+    return sock
+}
+
+const sendMessageWTyping = async (instance, msg, jid) => {
+    await instance.presenceSubscribe(jid)
+    await delay(500)
+
+    await instance.sendPresenceUpdate('composing', jid)
+    await delay(2000)
+
+    await instance.sendPresenceUpdate('paused', jid)
+
+    await instance.sendMessage(jid, msg)
 }
 
 module.exports = {
     ensureWhatsAppIsLoaded,
-    bindWhatsApp
+    bindWhatsApp,
+    sendMessageWTyping
 }
