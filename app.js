@@ -8,7 +8,8 @@ const QR = require('./services/whatsapp/QR');
 globalThis.serviceState = {
     whatsAppBot: {
         state: 0, // 0 off or error, 1 state qrcode, 2 state reconnect, 5 readyState
-        qr: new QR()
+        qr: new QR(),
+        instance: whatsAppMiddleware.bindWhatsApp()
     }
 }
 
@@ -48,6 +49,6 @@ app.use('/notes', ensureWhatsAppIsLoaded, notesRouter);
 app.use('/token', ensureWhatsAppIsLoaded, tokensRouter);
 app.use('/customer', ensureWhatsAppIsLoaded, customerRouter);
 
-globalThis.serviceState.whatsAppBot.instance = whatsAppMiddleware.bindWhatsApp()
+globalThis.serviceState.whatsAppBot.instance()
 
 module.exports = { app, serviceState };
