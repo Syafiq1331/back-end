@@ -1,3 +1,4 @@
 # Dependency directories
 node_modules/
 storage/sessions/baileys/
+dev/auth/
