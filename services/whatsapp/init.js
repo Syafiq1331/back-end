@@ -2,7 +2,7 @@ const whatsAppBaileys = require('@whiskeysockets/baileys')
 const QRCode = require("qrcode")
 const NodeCache = require('node-cache')
 const readline = require('readline')
-const { makeWASocket, delay, useMultiFileAuthState, makeCacheableSignalKeyStore,makeInMemoryStore,DisconnectReason } = whatsAppBaileys
+const { makeWASocket, delay, useMultiFileAuthState, Browsers, makeCacheableSignalKeyStore,makeInMemoryStore,DisconnectReason, readAndEmitEventStream, } = whatsAppBaileys
 const state = globalThis.serviceState
 
 const useStore = !process.argv.includes('--no-store')
@@ -48,6 +48,7 @@ const ensureWhatsAppIsLoaded = (req, res, next) => {
 async function bindWhatsApp() {
     let { state, saveCreds } = await useMultiFileAuthState("./storage/sessions/baileys");
     const sock = makeWASocket({
+		browser: Browsers.macOS("Desktop"),
         auth: {
 			creds: state.creds,
 			/** caching makes the store faster to send/recv messages */
