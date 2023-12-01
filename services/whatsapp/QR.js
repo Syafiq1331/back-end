@@ -8,6 +8,9 @@ module.exports = class QR {
     }
 
     get() {
-        return Buffer.from(this.base64, 'base64');
+        if (this.base64) {
+            return Buffer.from(this.base64, 'base64');
+        }
+        return false
     }
 }

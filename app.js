@@ -13,14 +13,14 @@ globalThis.serviceState = {
         instance: whatsApp.bindWhatsApp
     }
 }
-
-const { ensureWhatsAppIsLoaded } = whatsApp
+var whatsAppRouteService = require('./routes/whatsapp')
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var notesRouter = require('./routes/notes');
 var tokensRouter = require('./routes/tokens');
 var customerRouter = require('./routes/customers');
+var whatsAppRouter = whatsAppRouteService.router
 
 var app = express();
 app.use(logger('dev'));
@@ -30,23 +30,12 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.get('/manage/whatsapp-instance', (_req, res, next) => {
-    if (globalThis.serviceState.whatsAppBot.state === 5) {
-        return res.end("whatsapp sudah login")
-    }
-    next()
-}, (_req, res) => {
-    const qr = globalThis.serviceState.whatsAppBot.qr.get()
-    res.status(200).writeHead(200, {
-        'Content-Type': 'image/png',
-        'Content-Length': qr.length
-    }).end(qr)
-})
 
-app.use('/users', ensureWhatsAppIsLoaded, usersRouter);
-app.use('/notes', ensureWhatsAppIsLoaded, notesRouter);
-app.use('/token', ensureWhatsAppIsLoaded, tokensRouter);
-app.use('/customer', ensureWhatsAppIsLoaded, customerRouter);
+app.use('/users', whatsAppRouteService.middleware.ensureWhatsAppIsLoaded, usersRouter);
+app.use('/notes', whatsAppRouteService.middleware.ensureWhatsAppIsLoaded, notesRouter);
+app.use('/token', whatsAppRouteService.middleware.ensureWhatsAppIsLoaded, tokensRouter);
+app.use('/customer', whatsAppRouteService.middleware.ensureWhatsAppIsLoaded, customerRouter);
+app.use('/manage/whatsapp', whatsAppRouter)
 
 globalThis.serviceState.whatsAppBot.instance()
 
