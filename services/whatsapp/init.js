@@ -58,12 +58,20 @@ async function bindWhatsApp() {
 				const update = events['connection.update']
 				const { connection, lastDisconnect, qr } = update
 
-				if (update.isOnline) globalThis.serviceState.whatsAppBot.state = 5
-
+				if (update.isOnline) {
+					globalThis.serviceState.whatsAppBot.retriesInstance.count = 0
+					globalThis.serviceState.whatsAppBot.state = 5
+				}
 				if (connection === 'close') {
 					// reconnect if not logged out
 					if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) {
+						if (globalThis.serviceState.whatsAppBot.retriesInstance.count >= globalThis.serviceState.whatsAppBot.retriesInstance.max) {
+							console.log("max retries reached, exiting..")
+							process.exit(1)
+						}
+						globalThis.serviceState.whatsAppBot.retriesInstance.count++
 						globalThis.serviceState.whatsAppBot.state = 2
+						await delay(2000)
 						bindWhatsApp()
 					} else {
 						globalThis.serviceState.whatsAppBot.state = 0

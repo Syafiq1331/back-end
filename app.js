@@ -9,6 +9,10 @@ var whatsApp = require("./services/whatsapp/init");
 globalThis.serviceState = {
     whatsAppBot: {
         state: 0, // 0 off or error, 1 state qrcode, 2 state reconnect, 5 readyState
+        retriesInstance: {
+            count: 0,
+            max: 20
+        },
         qr: new QR(),
         instance: whatsApp.bindWhatsApp
     }
