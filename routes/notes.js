@@ -2,7 +2,7 @@ let express = require('express');
 let router = express.Router();
 const Validator = require('fastest-validator');
 const v = new Validator();
-const { Notes } = require("../models");
+const { prismaClient } = require('../services/database/database');
 
 // POST
 router.post('/', async (req, res, next) => {
@@ -18,7 +18,10 @@ router.post('/', async (req, res, next) => {
   }
 
   // Proses Create
-  const note = await Notes.create(req.body);
+  const note = await prismaClient.note.create({
+    data: req.body
+  })
+  // const note = await Notes.create(req.body);
   res.json({
     status: 200,
     message: "Success",
@@ -28,7 +31,8 @@ router.post('/', async (req, res, next) => {
 
 // GET
 router.get("/", async (req, res, next) => {
-  const notes = await Notes.findAll();
+  const notes = await prismaClient.note.findMany()
+  // const notes = await Notes.findAll();
   return res.json({
     status: 200,
     message: 'Success get all data',
@@ -39,7 +43,12 @@ router.get("/", async (req, res, next) => {
 // GET by ID
 router.get("/:id", async (req, res, next) => {
   const id = req.params.id;
-  let note = await Notes.findByPk(id);
+  let note = await prismaClient.note.findUnique({
+    where: {
+      id
+    }
+  })
+  // let note = await Notes.findByPk(id);
   return !note ?
     res.status(404).json({ status: 404, message: 'Data Not Found' }) :
     res.json({ status: 200, message: 'Success Get Data', data: note })
@@ -49,7 +58,12 @@ router.get("/:id", async (req, res, next) => {
 // PUT
 router.put("/:id", async (req, res, next) => {
   const id = req.params.id;
-  let note = await Notes.findByPk(id);
+  let note = await prismaClient.note.findUnique({
+    where: {
+      id
+    }
+  })
+  // let note = await Notes.findByPk(id);
   if (!note) {
     return res.status(404).json({
       status: 404,
@@ -69,7 +83,13 @@ router.put("/:id", async (req, res, next) => {
   }
 
   // Update process
-  note = await note.update(req.body);
+  note = await prismaClient.note.update({
+    where: {
+      id
+    },
+    data: req.body
+  });
+  // note = await note.update(req.body);
   res.json({
     status: 200,
     message: 'Success updated data',
@@ -80,12 +100,21 @@ router.put("/:id", async (req, res, next) => {
 // Remove Data By ID
 router.delete("/:id", async (req, res, next) => {
   const id = req.params.id;
-  let note = await Notes.findByPk(id);
+  let note = await prismaClient.note.findUnique({
+    where: {
+      id
+    }
+  })
+  // let note = await Notes.findByPk(id);
   if (!note) {
     return res.status(404).json({ status: 404, message: 'Data Not Found' });
   }
 
-  await note.destroy();
+  await prismaClient.note.delete({
+    where: {
+      id
+    }
+  });
   res.json({
     status: 200,
     message: "Success Delete Data",

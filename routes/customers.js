@@ -2,15 +2,15 @@ let express = require('express');
 let router = express.Router();
 const Validator = require('fastest-validator');
 const v = new Validator();
-const { Customer } = require("../models");
+const { prismaClient } = require('../services/database/database');
 
 // POST
 router.post('/', async (req, res, next) => {
   // Validation
   const schema = {
     name: 'string|required',
-    no_whatsapp: 'string',
-    tokenId: 'string',
+    whatsapp_number: 'string',
+    token_id: 'string',
   };
 
   function generateUniqueInvoiceNumber() {
@@ -28,10 +28,16 @@ router.post('/', async (req, res, next) => {
   }
 
   // Generate unique invoice number
-  const no_invoice = generateUniqueInvoiceNumber(); // Implement this function
+  const invoiceNumber = generateUniqueInvoiceNumber(); // Implement this function
 
   // Process Create
-  const customer = await Customer.create({ ...req.body, no_invoice });
+  const customer = await prismaClient.customer.create({
+    data: {
+      ...req.body, invoiceNumber
+    }
+  })
+
+  // const customer = await Customer.create({ ...req.body, invoice_number });
 
   return res.json({
     status: 200,
@@ -42,28 +48,39 @@ router.post('/', async (req, res, next) => {
 
 // GET
 router.get("/", async (req, res, next) => {
-  const customer = await Customer.findAll();
+  const customers = await prismaClient.customer.findMany()
+  // const customer = await Customer.findAll();
   return res.json({
     status: 200,
     message: 'Success get all data',
-    data: customer,
+    data: customers,
   });
 });
 
 // GET by ID
 router.get("/:id", async (req, res, next) => {
   const id = req.params.id;
-  let customer = await Customer.findByPk(id);
-  return !customer ?
+  let customers = await prismaClient.customer.findUnique({
+    where: {
+      id
+    }
+  })
+  // let customer = await Customer.findByPk(id);
+  return !customers ?
     res.status(404).json({ status: 404, message: 'Data Not Found' }) :
-    res.json({ status: 200, message: 'Success Get Data', data: customer })
+    res.json({ status: 200, message: 'Success Get Data', data: customers })
 });
 
 // PUT
 router.put("/:id", async (req, res, next) => {
   const id = req.params.id;
-  let customer = await Customer.findByPk(id);
-  if (!customer) {
+  let customers = await prismaClient.customer.findUnique({
+    where: {
+      id
+    }
+  })
+  // let customer = await Customer.findByPk(id);
+  if (!customers) {
     return res.status(404).json({
       status: 404,
       message: 'Data Not Found'
@@ -83,7 +100,15 @@ router.put("/:id", async (req, res, next) => {
   }
 
   // Update process
-  const updatedToken = await customer.update(req.body, { returning: true });
+  const updatedToken = await prismaClient.customer.update({
+    where: {
+      id: customers.id
+    },
+    data: {
+      ...req.body
+    }
+  })
+  // const updatedToken = await customer.update(req.body, { returning: true });
   res.json({
     status: 200,
     message: 'Success updated data',
@@ -94,12 +119,21 @@ router.put("/:id", async (req, res, next) => {
 // Remove Data By ID
 router.delete("/:id", async (req, res, next) => {
   const id = req.params.id;
-  let customer = await Customer.findByPk(id);
-  if (!customer) {
+  let customers = await prismaClient.customer.findUnique({
+    where: {
+      id
+    }
+  })
+  if (!customers) {
     return res.status(404).json({ status: 404, message: 'Data Not Found' });
   }
 
-  await customer.destroy();
+  await prismaClient.customer.delete({
+    where: {
+      id
+    }
+  })
+
   res.json({
     status: 200,
     message: "Success Delete Data",

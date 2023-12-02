@@ -2,8 +2,8 @@ let express = require('express');
 let router = express.Router();
 const Validator = require('fastest-validator');
 const v = new Validator();
-const { User } = require("../models");
 const bcrypt = require('bcrypt');
+const { prismaClient } = require('../services/database/database');
 
 // POST untuk membuat atau mengirim data pengguna
 router.post('/', async (req, res, next) => {
@@ -21,7 +21,12 @@ router.post('/', async (req, res, next) => {
   }
 
   // Periksa apakah email sudah digunakan
-  const existingUser = await User.findOne({ where: { email: req.body.email } });
+  const existingUser = await prismaClient.user.findFirst({
+    where: {
+      email: req.body.email
+    }
+  });
+  // const existingUser = await User.findOne({ where: { email: req.body.email } });
 
   if (existingUser) {
     return res.status(400).json({ message: 'Email sudah digunakan' });
@@ -32,11 +37,18 @@ router.post('/', async (req, res, next) => {
 
   // Proses pembuatan data pengguna
   try {
-    const user = await User.create({
-      nama: req.body.nama,
-      email: req.body.email,
-      password: hashedPassword, // Simpan kata sandi yang sudah dienkripsi
-    });
+    const user = await prismaClient.user.create({
+      data: {
+        nama: req.body.nama,
+        email: req.body.email,
+        password: hashedPassword
+      }
+    })
+    // const user = await User.create({
+    //   nama: req.body.nama,
+    //   email: req.body.email,
+    //   password: hashedPassword, // Simpan kata sandi yang sudah dienkripsi
+    // });
 
     return res.status(201).json({
       status: 201,
@@ -50,7 +62,8 @@ router.post('/', async (req, res, next) => {
 
 // GET
 router.get("/", async (req, res, next) => {
-  const user = await User.findAll();
+  const user = await prismaClient.user.findMany()
+  // const user = await User.findAll();
   return res.json({
     status: 200,
     message: 'Success get all data',
@@ -61,7 +74,12 @@ router.get("/", async (req, res, next) => {
 // GET by ID
 router.get("/:id", async (req, res, next) => {
   const id = req.params.id;
-  let user = await User.findByPk(id);
+  let user = await prismaClient.user.findUnique({
+    where: {
+      id
+    }
+  })
+  // let user = await User.findByPk(id);
   return !user ?
     res.status(404).json({ status: 404, message: 'Data Not Found' }) :
     res.json({ status: 200, message: 'Success Get Data', data: user })
@@ -79,7 +97,11 @@ router.put('/:id', async (req, res, next) => {
 
   try {
     // Cari pengguna berdasarkan ID
-    const user = await User.findByPk(id);
+    const user = await prismaClient.user.findUnique({
+      where: {
+        id
+      }
+    })
 
     if (!user) {
       return res.status(404).json({ message: 'Data pengguna tidak ditemukan' });
@@ -95,7 +117,15 @@ router.put('/:id', async (req, res, next) => {
     user.nama = nama;
     user.email = email;
 
-    await user.save();
+    await prismaClient.user.update({
+      where: {
+        id
+      },
+      data: {
+        nama: user.nama,
+        email: user.email
+      }
+    })
 
     return res.status(200).json({ message: 'Data pengguna berhasil diperbarui', data: user });
   } catch (error) {
@@ -106,12 +136,20 @@ router.put('/:id', async (req, res, next) => {
 // remove Data By ID
 router.delete("/:id", async (req, res, next) => {
   const id = req.params.id;
-  let user = await User.findByPk(id);
+  const user = await prismaClient.user.findUnique({
+    where: {
+      id
+    }
+  })
   if (!user) {
     return res.status(404).json({ status: 404, message: 'Data Not Found' });
   }
 
-  await user.destroy();
+  await prismaClient.user.delete({
+    where: {
+      id
+    }
+  })
   res.json({
     status: 200,
     message: "Success Delete Data",
