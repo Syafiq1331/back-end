@@ -2,10 +2,11 @@ const whatsAppBaileys = require('@whiskeysockets/baileys')
 const QRCode = require("qrcode")
 const NodeCache = require('node-cache')
 const readline = require('readline')
-const transferConfirmationHandler = require('./handler')
+// const transferConfirmationHandler = require('./handler')
 const { makeWASocket, delay, useMultiFileAuthState, Browsers, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, makeInMemoryStore, DisconnectReason, readAndEmitEventStream, } = whatsAppBaileys
 const state = globalThis.serviceState
 const MAIN_LOGGER = require("./logger")
+const { msgHandler } = require('../message/handler')
 
 const logger = MAIN_LOGGER.child({})
 logger.level = 'trace'
@@ -49,7 +50,21 @@ async function bindWhatsApp() {
 		getMessage
 	})
 
+
 	store?.bind(sock.ev)
+
+	async function sendMessageWTyping(msg, jid) {
+		await this.presenceSubscribe(jid)
+		await delay(500)
+
+		await this.sendPresenceUpdate('composing', jid)
+		await delay(2000)
+
+		await this.sendPresenceUpdate('paused', jid)
+		await this.sendMessage(jid, msg)
+	}
+
+	sock.sendMessageWTyping = sendMessageWTyping
 
 	sock.ev.process(
 		async (events) => {
@@ -101,29 +116,22 @@ async function bindWhatsApp() {
 				console.log("\n\n\n\n")
 				if (upsert.type === 'notify') {
 					for (const msg of upsert.messages) {
-						if (!msg.key.fromMe) {
+						const isFromUser = msg.key.remoteJid?.split("@")[1].startsWith("s.")
+						if (!msg.key.fromMe && isFromUser) {
 							console.log('replying to', msg.key.remoteJid)
 							await sock.readMessages([msg.key])
-							await sendMessageWTyping({ text: 'Hello there!' }, msg.key.remoteJid)
+							await msgHandler(sock, msg)
 							console.log("\n\n\n\n")
+						} else {
+							console.log(msg.message.conversation.split("\n"))
 						}
 					}
+				} else {
+
 				}
 			}
 		}
 	)
-
-	const sendMessageWTyping = async (msg, jid) => {
-		await sock.presenceSubscribe(jid)
-		await delay(500)
-
-		await sock.sendPresenceUpdate('composing', jid)
-		await delay(2000)
-
-		await sock.sendPresenceUpdate('paused', jid)
-
-		await sock.sendMessage(jid, msg)
-	}
 
 	return sock
 	async function getMessage(key) {
