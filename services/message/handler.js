@@ -10,13 +10,17 @@ async function msgHandler(instance, data) {
     console.log("\n\n\n\n\n\n\n\n\n\n")
     console.log("---------------------------------------\nmsg received\n")
     const msgTextContent = data.message?.extendedTextMessage?.text
-    // console.log("hasil", !data.key.remoteJid.split("@")[0] === process.env.ADMIN_PHONE_NUMBER)
     if (data.key.remoteJid.split("@")[0] === process.env.ADMIN_PHONE_NUMBER) {
         await onMsgIsFromAdminHandler(instance, data)
     } else {
-        if (msgTextContent.startsWith("Halo Kak\n") && msgTextContent.endsWith("]")) {
+        const isPaidInvoiceConfirmationMsg = msgTextContent.startsWith("Halo Kak\n") && msgTextContent.endsWith("]")
+        if (msgTextContent.startsWith("/testOrderFinished ")) { // /testOrderFinished Inv-222312
+            await onMsgFromClient(instance, data)
+        }
+        else if (isPaidInvoiceConfirmationMsg) {
             const invoiceNumber = msgTextContent.match(/(?<=Invoice: \[).+?(?=\])/g)[0]
             await instance.sendMessageWTyping({ text: `halo\n\nbaik kami proses terlebih dahulu invoice dengan kode:\n\n*${invoiceNumber}*\n\nTerima Kasih` }, data.key.remoteJid)
+            // await instance.sendMessageWTyping({})
         } else {
             await instance.sendMessageWTyping({ text: "halo\n\n\nkamu telah melakukan pembayaran berikut:\n\nRp.5000000 buat makan gorengan\nTerima Kasih!" }, data.key.remoteJid)
         }
@@ -36,7 +40,7 @@ async function msgHandler(instance, data) {
 async function onMsgIsFromAdminHandler(instance, data) {
     const msgTextContent = data.message?.extendedTextMessage?.text
     const adminJid = data.key.remoteJid
-    if (msgTextContent.startsWith("/cariinvoice ")) { // "/cariinvoice INV-23132"
+    if (msgTextContent.startsWith("/cekinvoice ")) { // "/cariinvoice INV-23132"
         const invoiceDetail = await searchInvoiceAction(instance, data)
         const invoiceNumber = msgTextContent.split(" ")[1]
         if (1) {
@@ -50,11 +54,14 @@ async function onMsgIsFromAdminHandler(instance, data) {
         const invoiceNumber = msgTextContent.split(" ")[1]
         const tokenProduk = msgTextContent.split(" ")[2]
         const confirmed = await confirmInvoiceAction(instance, data)
-        if (1) {
-            await instance.sendMessageWTyping({
+        if (1 && tokenProduk.length > 9) {
+            return await instance.sendMessageWTyping({
                 text: `Invoice dengan ID *${invoiceNumber}* berhasil diproses, detail sedang dikirim menuju client\n\nToken Perpanjangan: ${tokenProduk}`
             }, adminJid)
         }
+        await instance.sendMessageWTyping({
+            text: `Input Salah!\n\nPastikan Input yang dimasukkan sudah benar\n\nketik /help untuk melihat list perintah`
+        }, adminJid)
         return
     }
     console.log(`\n\n\n\n\n\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\n\n\n\n\n\n`)
@@ -69,6 +76,7 @@ async function onMsgIsFromAdminHandler(instance, data) {
  */
 async function onMsgFromClient(instance, data) {
     // notifyAdmin
+    await notifyCustomerInvoiceConfirmedAction(instance, data)
 }
 
 async function searchInvoiceAction(params) {
@@ -77,6 +85,23 @@ async function searchInvoiceAction(params) {
 
 async function confirmInvoiceAction(params) {
 
+}
+
+async function name(params) {
+
+}
+/**
+ * 
+ * @param {import("@whiskeysockets/baileys").WASocket} instance 
+ * @param {import("@whiskeysockets/baileys").WAProto.IWebMessageInfo} data 
+ */
+async function notifyCustomerInvoiceConfirmedAction(instance, data) {
+    // testMode
+    const invoiceNumber = data.message.extendedTextMessage.text.split(" ")[1]
+    const customerJid = data.key.remoteJid
+    await instance.sendMessageWTyping({
+        text: `halo\nPembayaran ${invoiceNumber} sudah kami terima:\n\nBerikut detail pesanan:\n\nNama Pembeli: Customer 1\nIdPel: ${Math.floor(Math.random() * 10000000000000)}\nToken: ${Math.floor(Math.random() * 10000000000000)}\n\nTerima Kasih`
+    }, customerJid)
 }
 
 
