@@ -7,14 +7,14 @@ module.exports = {
       {
         nama: 'TOKEN-001',
         price: 12000,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        created_at: new Date(),
+        updated_at: new Date(),
       },
       {
         nama: 'TOKEN-002',
         price: 12000,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        created_at: new Date(),
+        updated_at: new Date(),
       },
     ]);
   },

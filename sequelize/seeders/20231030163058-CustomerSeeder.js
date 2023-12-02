@@ -14,19 +14,19 @@ module.exports = {
     await queryInterface.bulkInsert('customers', [
       {
         name: 'Customer 1',
-        no_whatsapp: '1234567890',
-        no_invoice: generateUniqueInvoiceNumber(),
-        tokenId: 1, // Sesuaikan dengan ID token yang sesuai
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        whatsapp_number: '1234567890',
+        invoice_number: generateUniqueInvoiceNumber(),
+        token_id: 1, // Sesuaikan dengan ID token yang sesuai
+        created_at: new Date(),
+        updated_at: new Date(),
       },
       {
         name: 'Customer 2',
-        no_whatsapp: '9876543210',
-        no_invoice: generateUniqueInvoiceNumber(),
-        tokenId: 2, // Sesuaikan dengan ID token yang sesuai
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        whatsapp_number: '9876543210',
+        invoice_number: generateUniqueInvoiceNumber(),
+        token_id: 2, // Sesuaikan dengan ID token yang sesuai
+        created_at: new Date(),
+        updated_at: new Date(),
       },
     ], {});
   },
