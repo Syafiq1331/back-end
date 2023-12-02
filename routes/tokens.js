@@ -24,7 +24,6 @@ router.post('/', async (req, res, next) => {
       nama: req.body.nama
     }
   })
-  // const existingToken = await Token.findOne({ where: { nama: req.body.nama } });
   if (existingToken) {
     return res.status(400).json({ message: 'Nama must be unique for tokens' });
   }
@@ -33,7 +32,6 @@ router.post('/', async (req, res, next) => {
   const token = await prismaClient.token.create({
     data: req.body
   })
-  // const token = await Token.create(req.body);
   return res.json({
     status: 200,
     message: 'Success',
@@ -44,7 +42,6 @@ router.post('/', async (req, res, next) => {
 // GET
 router.get("/", async (req, res, next) => {
   const token = await prismaClient.token.findMany()
-  // const token = await Token.findAll();
   return res.json({
     status: 200,
     message: 'Success get all data',
@@ -60,7 +57,6 @@ router.get("/:id", async (req, res, next) => {
       id
     }
   })
-  // let token = await Token.findByPk(id);
   return !token ?
     res.status(404).json({ status: 404, message: 'Data Not Found' }) :
     res.json({ status: 200, message: 'Success Get Data', data: token })
@@ -74,7 +70,6 @@ router.put("/:id", async (req, res, next) => {
       id
     }
   })
-  // let token = await Token.findByPk(id);
   if (!token) {
     return res.status(404).json({
       status: 404,
@@ -99,7 +94,6 @@ router.put("/:id", async (req, res, next) => {
       id
     }, data: req.body
   })
-  // const updatedToken = await token.update(req.body, { returning: true });
   res.json({
     status: 200,
     message: 'Success updated data',
@@ -115,7 +109,6 @@ router.delete("/:id", async (req, res, next) => {
       id
     }
   })
-  // let token = await Token.findByPk(id);
   if (!token) {
     return res.status(404).json({ status: 404, message: 'Data Not Found' });
   }
@@ -125,7 +118,6 @@ router.delete("/:id", async (req, res, next) => {
       id
     }
   })
-  // await token.destroy();
   res.json({
     status: 200,
     message: "Success Delete Data",

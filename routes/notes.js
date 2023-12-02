@@ -21,7 +21,6 @@ router.post('/', async (req, res, next) => {
   const note = await prismaClient.note.create({
     data: req.body
   })
-  // const note = await Notes.create(req.body);
   res.json({
     status: 200,
     message: "Success",
@@ -32,7 +31,6 @@ router.post('/', async (req, res, next) => {
 // GET
 router.get("/", async (req, res, next) => {
   const notes = await prismaClient.note.findMany()
-  // const notes = await Notes.findAll();
   return res.json({
     status: 200,
     message: 'Success get all data',
@@ -48,7 +46,6 @@ router.get("/:id", async (req, res, next) => {
       id
     }
   })
-  // let note = await Notes.findByPk(id);
   return !note ?
     res.status(404).json({ status: 404, message: 'Data Not Found' }) :
     res.json({ status: 200, message: 'Success Get Data', data: note })
@@ -63,7 +60,6 @@ router.put("/:id", async (req, res, next) => {
       id
     }
   })
-  // let note = await Notes.findByPk(id);
   if (!note) {
     return res.status(404).json({
       status: 404,
@@ -89,7 +85,6 @@ router.put("/:id", async (req, res, next) => {
     },
     data: req.body
   });
-  // note = await note.update(req.body);
   res.json({
     status: 200,
     message: 'Success updated data',
@@ -105,7 +100,6 @@ router.delete("/:id", async (req, res, next) => {
       id
     }
   })
-  // let note = await Notes.findByPk(id);
   if (!note) {
     return res.status(404).json({ status: 404, message: 'Data Not Found' });
   }

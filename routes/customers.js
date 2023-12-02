@@ -37,8 +37,6 @@ router.post('/', async (req, res, next) => {
     }
   })
 
-  // const customer = await Customer.create({ ...req.body, invoice_number });
-
   return res.json({
     status: 200,
     message: 'Success',
@@ -49,7 +47,6 @@ router.post('/', async (req, res, next) => {
 // GET
 router.get("/", async (req, res, next) => {
   const customers = await prismaClient.customer.findMany()
-  // const customer = await Customer.findAll();
   return res.json({
     status: 200,
     message: 'Success get all data',
@@ -65,7 +62,6 @@ router.get("/:id", async (req, res, next) => {
       id
     }
   })
-  // let customer = await Customer.findByPk(id);
   return !customers ?
     res.status(404).json({ status: 404, message: 'Data Not Found' }) :
     res.json({ status: 200, message: 'Success Get Data', data: customers })
@@ -79,7 +75,6 @@ router.put("/:id", async (req, res, next) => {
       id
     }
   })
-  // let customer = await Customer.findByPk(id);
   if (!customers) {
     return res.status(404).json({
       status: 404,
@@ -108,7 +103,6 @@ router.put("/:id", async (req, res, next) => {
       ...req.body
     }
   })
-  // const updatedToken = await customer.update(req.body, { returning: true });
   res.json({
     status: 200,
     message: 'Success updated data',

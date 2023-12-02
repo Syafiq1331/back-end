@@ -26,7 +26,6 @@ router.post('/', async (req, res, next) => {
       email: req.body.email
     }
   });
-  // const existingUser = await User.findOne({ where: { email: req.body.email } });
 
   if (existingUser) {
     return res.status(400).json({ message: 'Email sudah digunakan' });
@@ -41,15 +40,9 @@ router.post('/', async (req, res, next) => {
       data: {
         nama: req.body.nama,
         email: req.body.email,
-        password: hashedPassword
+        password: hashedPassword // Simpan kata sandi yang sudah dienkripsi
       }
     })
-    // const user = await User.create({
-    //   nama: req.body.nama,
-    //   email: req.body.email,
-    //   password: hashedPassword, // Simpan kata sandi yang sudah dienkripsi
-    // });
-
     return res.status(201).json({
       status: 201,
       message: 'Data pengguna berhasil dibuat',
@@ -63,7 +56,6 @@ router.post('/', async (req, res, next) => {
 // GET
 router.get("/", async (req, res, next) => {
   const user = await prismaClient.user.findMany()
-  // const user = await User.findAll();
   return res.json({
     status: 200,
     message: 'Success get all data',
@@ -79,7 +71,6 @@ router.get("/:id", async (req, res, next) => {
       id
     }
   })
-  // let user = await User.findByPk(id);
   return !user ?
     res.status(404).json({ status: 404, message: 'Data Not Found' }) :
     res.json({ status: 200, message: 'Success Get Data', data: user })
