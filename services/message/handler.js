@@ -44,23 +44,35 @@ async function onMsgIsFromAdminHandler(instance, data) {
         return await instance.sendMessageWTyping({
             text: `Tidak ditemukan Invoice ID: ${invoiceNumber}`
         }, adminJid)
+    } else if (msgTextContent.startsWith("/ascustomer ")) {
+        console.log("emulate as client")
+        await onMsgFromClient(instance, data)
     } else if (msgTextContent.startsWith("/confirminvoice ")) {// "/confirminvoice INV-231231 nomorTokenPerpanjangan"
 
         const invoiceNumber = msgTextContent.split(" ")[1]
         const tokenProduk = msgTextContent.split(" ")[2]
-        const confirmed = await confirmInvoiceAction(instance, data)
-        if (1 && tokenProduk.length > 9) {
-            return await instance.sendMessageWTyping({
+        const isInvoiceAvailable = await prismaClient.customerOrder.findFirst({
+            where: {
+                invoiceNumber,
+            }
+        })
+
+        if (isInvoiceAvailable && tokenProduk.length > 9) {
+
+            const { productName, productPrice, tokenListrikCustomer, name, whatsappNumber } = isInvoiceAvailable
+
+            await instance.sendMessageWTyping({
                 text: `Invoice dengan ID *${invoiceNumber}* berhasil diproses, detail sedang dikirim menuju client\n\nToken Perpanjangan: ${tokenProduk}`
             }, adminJid)
+
+            // const customerPhoneNumber = whatsappNumber + "@s.whatsapp.net"
+            await notifyCustomerInvoiceConfirmedAction(instance, isInvoiceAvailable, tokenProduk)
+            return
         }
         await instance.sendMessageWTyping({
             text: `Input Salah!\n\nPastikan Input yang dimasukkan sudah benar\n\nketik /help untuk melihat list perintah`
         }, adminJid)
         return
-    } else if (msgTextContent.startsWith("/ascustomer ")) {
-        console.log("emulate as client")
-        await onMsgFromClient(instance, data)
     }
     console.log(`\n\n\n\n\n\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\n\n\n\n\n\n`)
     // adminTakeOrderAction
@@ -90,11 +102,8 @@ async function onMsgFromClient(instance, data) {
     if (msgTextContent.startsWith("/testOrderFinished ")) { // /testOrderFinished Inv-222312
         await notifyCustomerInvoiceConfirmedAction(instance, newData)
     } else if (isPaidInvoiceConfirmationMsg) {
-        const invoiceNumber = msgTextContent.match(/(?<=Invoice: \[).+?(?=\])/g)[0]
-        await instance.sendMessageWTyping({ text: `halo\n\nbaik kami proses terlebih dahulu invoice dengan kode:\n\n*${invoiceNumber}*\n\nTerima Kasih` }, newData.key.remoteJid)
-        // await instance.sendMessageWTyping({})
+        await onPaidInvoiceConfirmation(instance, newData)
     } else {
-        // await instance.sendMessageWTyping({ text: "halo\n\n\nkamu telah melakukan pembayaran berikut:\n\nRp.5000000 buat makan gorengan\nTerima Kasih!" }, newData.key.remoteJid)
         await instance.sendMessageWTyping({ text: "halo, ada yang bisa kami bantu?" }, newData.key.remoteJid)
     }
 
@@ -116,20 +125,46 @@ async function confirmInvoiceAction(params) {
 
 }
 
-async function name(params) {
+/**
+ * 
+ * @param {import("@whiskeysockets/baileys").WASocket} instance 
+ * @param {import("@whiskeysockets/baileys").WAProto.IWebMessageInfo} data 
+ */
+async function onPaidInvoiceConfirmation(instance, data) {
+    const whatsappNumber = data.key.remoteJid.split("@")[0]
+    const msgTextContent = data.message?.extendedTextMessage?.text
+    const invoiceNumber = msgTextContent.match(/(?<=Invoice: \[).+?(?=\])/g)[0]
+    const isInvoiceAvailable = await prismaClient.customerOrder.findFirst({
+        where: {
+            invoiceNumber,
+            whatsappNumber
+        }
+    })
 
+    if (isInvoiceAvailable) {
+        const { productName, productPrice, tokenListrikCustomer, name } = isInvoiceAvailable
+        const adminJid = data.key.remoteJid
+
+        await instance.sendMessageWTyping({ text: `halo\n\nbaik kami proses terlebih dahulu invoice dengan kode:\n\n*${invoiceNumber}*\n\nTerima Kasih` }, data.key.remoteJid)
+        await instance.sendMessageWTyping({
+            text: `halo, customer telah melakukan pembayaran\n\ndetail:\n\nInvoice ID:\n*${invoiceNumber}*\nCustomer:\n*${name}*\nToken Listrik:\n*${tokenListrikCustomer}*\nProduk:\n*${productName}*\nHarga:\n*Rp. ${productPrice}*\n\n\nketik *"/confirminvoice ${invoiceNumber} <tokenPulsa>"* untuk konfirmasi status pembayaran dan kirim token pulsa menuju customer`
+        }, adminJid)
+
+        return
+    }
+    await instance.sendMessageWTyping({ text: `halo, invoice dengan id: ${invoiceNumber} tidak ditemukan, pastikan untuk mengirim pesan menggunakan nomor whatsapp yang sudah dicantumkan pada saat pembayaran\n\nTerima kasih` }, data.key.remoteJid)
 }
 /**
  * 
  * @param {import("@whiskeysockets/baileys").WASocket} instance 
  * @param {import("@whiskeysockets/baileys").WAProto.IWebMessageInfo} data 
  */
-async function notifyCustomerInvoiceConfirmedAction(instance, data) {
+async function notifyCustomerInvoiceConfirmedAction(instance, customerOrderData, tokenPulsaListrik) {
     // testMode
-    const invoiceNumber = data.message.extendedTextMessage.text.split(" ")[1]
-    const customerJid = data.key.remoteJid
+    const { productName, productPrice, tokenListrikCustomer, name, whatsappNumber, invoiceNumber } = customerOrderData
+    const customerJid = whatsappNumber + "@s.whatsapp.net"
     await instance.sendMessageWTyping({
-        text: `halo\nPembayaran ${invoiceNumber} sudah kami terima:\n\nBerikut detail pesanan:\n\nNama Pembeli: Customer 1\nIdPel: ${Math.floor(Math.random() * 10000000000000)}\nToken: ${Math.floor(Math.random() * 10000000000000)}\n\nTerima Kasih`
+        text: `halo\nPembayaran Invoice *${invoiceNumber}* Anda telah selesai kami verifikasi:\n\nBerikut detail pesanan:\n\nNama Pembeli:\n*${name}*\nIdPel:\n*${tokenListrikCustomer}*\nToken:\n*${tokenPulsaListrik}*\n\n\nTerima Kasih`
     }, customerJid)
 }
 
