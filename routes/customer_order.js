@@ -3,7 +3,7 @@ let router = express.Router();
 const Validator = require('fastest-validator');
 const v = new Validator();
 const { prismaClient } = require('../services/database/database');
-const { notifyCustomerInvoiceConfirmedAction } = require('../services/message/handler');
+// const { notifyCustomerInvoiceConfirmedAction } = require('../services/message/handler');
 
 // POST
 router.post('/', async (req, res, next) => {
@@ -111,7 +111,7 @@ router.put("/:id", async (req, res, next) => {
   const schema = {
     name: 'string|required',
     no_whatsapp: 'string',
-    tokenId: 'string',
+    tokenListrikCustomer: 'string',
   };
 
   const validate = v.validate(req.body, schema)
@@ -125,7 +125,9 @@ router.put("/:id", async (req, res, next) => {
       id: customers.id
     },
     data: {
-      ...req.body
+      name: schema.name,
+      whatsappNumber: schema.no_whatsapp,
+      tokenListrikCustomer: schema.tokenListrikCustomer
     }
   })
   res.json({
