@@ -20,10 +20,12 @@ CREATE TABLE `customer_orders` (
     `product_name` VARCHAR(255) NOT NULL,
     `product_price` VARCHAR(32) NOT NULL,
     `product_id` INTEGER NOT NULL,
+    `product_attachment` VARCHAR(191) NULL DEFAULT '',
     `order_status` ENUM('pending', 'processing', 'finished') NOT NULL DEFAULT 'pending',
     `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
     `updated_at` DATETIME(0) NOT NULL,
 
+    UNIQUE INDEX `customer_orders_invoice_number_key`(`invoice_number`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

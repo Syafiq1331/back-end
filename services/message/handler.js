@@ -90,8 +90,9 @@ async function onAdminCheckInvoiceAction(instance, data) {
     const invoiceDetail = await searchInvoiceService(invoiceNumber)
     if (invoiceDetail) {
         const { name, orderStatus, productName, productPrice, tokenListrikCustomer, whatsappNumber } = invoiceDetail
+        const pulsaToken = orderStatus === 'finished' ? `Pulsa Token:\n*${invoiceDetail.productAttachment}*\n` : ''
         return await instance.sendMessageWTyping({
-            text: `Invoice: ${invoiceNumber} ditemukan!:\n\n---\nStatus Invoice: *${orderStatus}*\n---\nDetail\n---\nCustomer:\n*${name}*\nNomor HP:\n${whatsappNumber}\nProduk:\n*${productName}*\nToken Listrik Pelanggan:\n*${tokenListrikCustomer}*\nBiaya:\n*Rp.${productPrice}*\n---`
+            text: `Invoice: *${invoiceNumber}* ditemukan!:\n\n---\nStatus Invoice: *${orderStatus}*\n${pulsaToken}---\nDetail\n---\nCustomer:\n*${name}*\nNomor HP:\n*${whatsappNumber}*\nProduk:\n*${productName}*\nToken Listrik Pelanggan:\n*${tokenListrikCustomer}*\nBiaya:\n*Rp.${productPrice}*\n---`
         }, adminJid)
     }
     return await instance.sendMessageWTyping({
@@ -122,7 +123,8 @@ async function onAdminConfirmInvoiceAction(instance, data) {
             invoiceNumber,
         },
         data: {
-            orderStatus: 'finished'
+            orderStatus: 'finished',
+            productAttachment: tokenProduk
         },
         select: {
             productName: true, productPrice: true, tokenListrikCustomer: true, name: true, whatsappNumber: true, invoiceNumber: true
