@@ -1,3 +1,5 @@
+const { prismaClient } = require("../database/database")
+
 /**
  * 
  * @param {*} instance 
@@ -13,17 +15,7 @@ async function msgHandler(instance, data) {
     if (data.key.remoteJid.split("@")[0] === process.env.ADMIN_PHONE_NUMBER) {
         await onMsgIsFromAdminHandler(instance, data)
     } else {
-        const isPaidInvoiceConfirmationMsg = msgTextContent.startsWith("Halo Kak\n") && msgTextContent.endsWith("]")
-        if (msgTextContent.startsWith("/testOrderFinished ")) { // /testOrderFinished Inv-222312
-            await onMsgFromClient(instance, data)
-        }
-        else if (isPaidInvoiceConfirmationMsg) {
-            const invoiceNumber = msgTextContent.match(/(?<=Invoice: \[).+?(?=\])/g)[0]
-            await instance.sendMessageWTyping({ text: `halo\n\nbaik kami proses terlebih dahulu invoice dengan kode:\n\n*${invoiceNumber}*\n\nTerima Kasih` }, data.key.remoteJid)
-            // await instance.sendMessageWTyping({})
-        } else {
-            await instance.sendMessageWTyping({ text: "halo\n\n\nkamu telah melakukan pembayaran berikut:\n\nRp.5000000 buat makan gorengan\nTerima Kasih!" }, data.key.remoteJid)
-        }
+        await onMsgFromClient(instance, data)
     }
     console.log(data)
     console.log("\n---------------------------------------")
@@ -41,14 +33,17 @@ async function onMsgIsFromAdminHandler(instance, data) {
     const msgTextContent = data.message?.extendedTextMessage?.text
     const adminJid = data.key.remoteJid
     if (msgTextContent.startsWith("/cekinvoice ")) { // "/cariinvoice INV-23132"
-        const invoiceDetail = await searchInvoiceAction(instance, data)
         const invoiceNumber = msgTextContent.split(" ")[1]
-        if (1) {
-            await instance.sendMessageWTyping({
-                text: `Invoice: ${invoiceNumber} ditemukan!:\n\n---\nCustomer: *Customer 1*\nProduk: *Token Listrik Rp.200.000*\nBiaya: *Rp.195.000*\nStatus Invoice: *pending*\n---`
+        const invoiceDetail = await searchInvoiceAction(invoiceNumber)
+        if (invoiceDetail) {
+            const { name, orderStatus, productName, productPrice, tokenListrikCustomer, whatsappNumber } = invoiceDetail
+            return await instance.sendMessageWTyping({
+                text: `Invoice: ${invoiceNumber} ditemukan!:\n\n---\nStatus Invoice: *${orderStatus}*\n---\nDetail\n---\nCustomer:\n*${name}*\nNomor HP:\n${whatsappNumber}\nProduk:\n*${productName}*\nToken Listrik Pelanggan:\n*${tokenListrikCustomer}*\nBiaya:\n*Rp.${productPrice}*\n---`
             }, adminJid)
         }
-        return
+        return await instance.sendMessageWTyping({
+            text: `Tidak ditemukan Invoice ID: ${invoiceNumber}`
+        }, adminJid)
     } else if (msgTextContent.startsWith("/confirminvoice ")) {// "/confirminvoice INV-231231 nomorTokenPerpanjangan"
 
         const invoiceNumber = msgTextContent.split(" ")[1]
@@ -63,6 +58,9 @@ async function onMsgIsFromAdminHandler(instance, data) {
             text: `Input Salah!\n\nPastikan Input yang dimasukkan sudah benar\n\nketik /help untuk melihat list perintah`
         }, adminJid)
         return
+    } else if (msgTextContent.startsWith("/ascustomer ")) {
+        console.log("emulate as client")
+        await onMsgFromClient(instance, data)
     }
     console.log(`\n\n\n\n\n\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\n\n\n\n\n\n`)
     // adminTakeOrderAction
@@ -75,12 +73,43 @@ async function onMsgIsFromAdminHandler(instance, data) {
  * @param {import("@whiskeysockets/baileys").WAProto.IWebMessageInfo} data 
  */
 async function onMsgFromClient(instance, data) {
+    let newData = data
+    if (newData.message?.extendedTextMessage?.text.startsWith("/ascustomer ")) {
+        console.log("\n\nfound isFrom admin, replacing...\n\n")
+        const sanityText = newData.message.extendedTextMessage.text.replace("/ascustomer ", "")
+        newData.message.extendedTextMessage.text = sanityText
+    }
+
+    console.log(newData)
+
+    let msgTextContent = newData.message?.extendedTextMessage?.text
+
+    console.log("\n\n\n\n\n\n\n", msgTextContent, "\n\n\n\n\n\n\n")
+    const isPaidInvoiceConfirmationMsg = msgTextContent.startsWith("Halo Kak\n") && msgTextContent.endsWith("]")
+
+    if (msgTextContent.startsWith("/testOrderFinished ")) { // /testOrderFinished Inv-222312
+        await notifyCustomerInvoiceConfirmedAction(instance, newData)
+    } else if (isPaidInvoiceConfirmationMsg) {
+        const invoiceNumber = msgTextContent.match(/(?<=Invoice: \[).+?(?=\])/g)[0]
+        await instance.sendMessageWTyping({ text: `halo\n\nbaik kami proses terlebih dahulu invoice dengan kode:\n\n*${invoiceNumber}*\n\nTerima Kasih` }, newData.key.remoteJid)
+        // await instance.sendMessageWTyping({})
+    } else {
+        // await instance.sendMessageWTyping({ text: "halo\n\n\nkamu telah melakukan pembayaran berikut:\n\nRp.5000000 buat makan gorengan\nTerima Kasih!" }, newData.key.remoteJid)
+        await instance.sendMessageWTyping({ text: "nomor kurang tepat" }, newData.key.remoteJid)
+    }
+
+
     // notifyAdmin
-    await notifyCustomerInvoiceConfirmedAction(instance, data)
+    // await notifyCustomerInvoiceConfirmedAction(instance, data)
 }
 
-async function searchInvoiceAction(params) {
-    const { instance } = globalThis.serviceState.whatsAppBot
+async function searchInvoiceAction(invoiceNumber) {
+    const invoice = await prismaClient.customerOrder.findFirst({
+        where: {
+            invoiceNumber
+        }
+    })
+    return invoice
 }
 
 async function confirmInvoiceAction(params) {
@@ -106,5 +135,5 @@ async function notifyCustomerInvoiceConfirmedAction(instance, data) {
 
 
 module.exports = {
-    msgHandler
+    msgHandler,
 }

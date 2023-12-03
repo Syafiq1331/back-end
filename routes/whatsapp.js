@@ -26,6 +26,10 @@ router.get('/login-instance', middleware.isWhatsAppLoggedIn, (_req, res) => {
     return res.status(500).end('unparseable qr code')
 })
 
+router.get('/history/messages', middleware.isWhatsAppLoggedIn, (_req, res) => {
+    return res.end("inilah")
+})
+
 module.exports = {
     middleware, router
 }
