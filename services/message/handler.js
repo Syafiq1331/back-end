@@ -95,7 +95,7 @@ async function onMsgFromClient(instance, data) {
         // await instance.sendMessageWTyping({})
     } else {
         // await instance.sendMessageWTyping({ text: "halo\n\n\nkamu telah melakukan pembayaran berikut:\n\nRp.5000000 buat makan gorengan\nTerima Kasih!" }, newData.key.remoteJid)
-        await instance.sendMessageWTyping({ text: "nomor kurang tepat" }, newData.key.remoteJid)
+        await instance.sendMessageWTyping({ text: "halo, ada yang bisa kami bantu?" }, newData.key.remoteJid)
     }
 
 
