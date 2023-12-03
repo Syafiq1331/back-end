@@ -23,7 +23,7 @@ var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var notesRouter = require('./routes/notes');
 var tokensRouter = require('./routes/tokens');
-var customerRouter = require('./routes/customers');
+var customerOrderRouter = require('./routes/customer_order');
 
 var app = express();
 app.use(logger('dev'));
@@ -37,7 +37,7 @@ app.use('/', indexRouter);
 app.use('/users', whatsAppMiddleware.ensureWhatsAppIsLoaded, usersRouter);
 app.use('/notes', whatsAppMiddleware.ensureWhatsAppIsLoaded, notesRouter);
 app.use('/token', whatsAppMiddleware.ensureWhatsAppIsLoaded, tokensRouter);
-app.use('/customer', whatsAppMiddleware.ensureWhatsAppIsLoaded, customerRouter);
+app.use('/customer-order', whatsAppMiddleware.ensureWhatsAppIsLoaded, customerOrderRouter);
 app.use('/manage/whatsapp', whatsAppRouter)
 
 

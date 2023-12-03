@@ -71,39 +71,44 @@ async function main() {
             },
         ]
     })
+    // await prismaClient.token.createMany({
+    //     data: [
+    //         {
+    //             nama: 'TOKEN-001',
+    //             price: 12000,
+    //             createdAt: new Date(),
+    //             updatedAt: new Date(),
+    //         },
+    //         {
+    //             nama: 'TOKEN-002',
+    //             price: 12000,
+    //             createdAt: new Date(),
+    //             updatedAt: new Date(),
+    //         },
+    //     ]
+    // })
 
-    await prismaClient.token.createMany({
+    await prismaClient.customerOrder.createMany({
         data: [
             {
-                nama: 'TOKEN-001',
-                price: 12000,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            },
-            {
-                nama: 'TOKEN-002',
-                price: 12000,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            },
-        ]
-    })
-
-    await prismaClient.customer.createMany({
-        data: [
-            {
-                name: 'Customer 1',
+                name: 'Rido - Customer 1',
                 whatsappNumber: '1234567890',
+                tokenListrikCustomer: '229123-23828201923-basdd92',
                 invoiceNumber: generateUniqueInvoiceNumber(),
-                tokenId: 1, // Sesuaikan dengan ID token yang sesuai
+                productId: 1,
+                productName: 'TOKEN LISTRIK - 100.000',
+                productPrice: '95000',
                 createdAt: new Date(),
                 updatedAt: new Date(),
             },
             {
-                name: 'Customer 2',
+                name: 'Alvin - Customer 2',
                 whatsappNumber: '9876543210',
+                tokenListrikCustomer: '229123-27273128-basdd92',
                 invoiceNumber: generateUniqueInvoiceNumber(),
-                tokenId: 2, // Sesuaikan dengan ID token yang sesuai
+                productId: 2,
+                productName: 'TOKEN LISTRIK - 200.000',
+                productPrice: '195000',
                 createdAt: new Date(),
                 updatedAt: new Date(),
             },

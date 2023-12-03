@@ -1,19 +1,34 @@
 -- CreateTable
-CREATE TABLE `Customer` (
+CREATE TABLE `message_queues` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(255) NOT NULL,
-    `whatsapp_number` VARCHAR(255) NOT NULL,
-    `invoice_number` VARCHAR(255) NULL,
-    `token_id` INTEGER NULL,
-    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
-    `updated_at` DATETIME(0) NOT NULL,
+    `destination_phone_number` VARCHAR(32) NOT NULL,
+    `content` LONGTEXT NOT NULL,
+    `status` ENUM('pending', 'delivered') NOT NULL DEFAULT 'pending',
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updated_at` DATETIME(3) NOT NULL,
 
-    INDEX `token_id`(`token_id`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Note` (
+CREATE TABLE `customer_orders` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `name` VARCHAR(255) NOT NULL,
+    `whatsapp_number` VARCHAR(255) NOT NULL,
+    `token_listrik_customer` VARCHAR(64) NULL,
+    `invoice_number` VARCHAR(255) NOT NULL,
+    `product_name` VARCHAR(255) NOT NULL,
+    `product_price` VARCHAR(32) NOT NULL,
+    `product_id` INTEGER NOT NULL,
+    `order_status` ENUM('pending', 'processing', 'finished') NOT NULL DEFAULT 'pending',
+    `created_at` DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+    `updated_at` DATETIME(0) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `notes` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `title` VARCHAR(255) NULL,
     `description` VARCHAR(255) NULL,
@@ -24,7 +39,7 @@ CREATE TABLE `Note` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Product` (
+CREATE TABLE `products` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(255) NOT NULL,
     `price` INTEGER NOT NULL,
@@ -37,7 +52,7 @@ CREATE TABLE `Product` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `Token` (
+CREATE TABLE `tokens` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `nama` VARCHAR(255) NOT NULL,
     `price` INTEGER NOT NULL,
@@ -49,7 +64,7 @@ CREATE TABLE `Token` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `User` (
+CREATE TABLE `users` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `nama` VARCHAR(255) NOT NULL,
     `email` VARCHAR(255) NOT NULL,
@@ -60,6 +75,3 @@ CREATE TABLE `User` (
     UNIQUE INDEX `email`(`email`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- AddForeignKey
-ALTER TABLE `Customer` ADD CONSTRAINT `Customer_token_id_fkey` FOREIGN KEY (`token_id`) REFERENCES `Token`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
