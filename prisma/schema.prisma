@@ -24,7 +24,7 @@ model CustomerOrder {
   name                 String      @db.VarChar(255)
   whatsappNumber       String      @map("whatsapp_number") @db.VarChar(255)
   tokenListrikCustomer String?     @map("token_listrik_customer") @db.VarChar(64)
-  invoiceNumber        String      @map("invoice_number") @db.VarChar(255)
+  invoiceNumber        String      @unique @map("invoice_number") @db.VarChar(255)
   productName          String      @map("product_name") @db.VarChar(255)
   productPrice         String      @map("product_price") @db.VarChar(32)
   productId            Int         @map("product_id")

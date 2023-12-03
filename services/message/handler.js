@@ -33,46 +33,15 @@ async function onMsgIsFromAdminHandler(instance, data) {
     const msgTextContent = data.message?.extendedTextMessage?.text
     const adminJid = data.key.remoteJid
     if (msgTextContent.startsWith("/cekinvoice ")) { // "/cariinvoice INV-23132"
-        const invoiceNumber = msgTextContent.split(" ")[1]
-        const invoiceDetail = await searchInvoiceAction(invoiceNumber)
-        if (invoiceDetail) {
-            const { name, orderStatus, productName, productPrice, tokenListrikCustomer, whatsappNumber } = invoiceDetail
-            return await instance.sendMessageWTyping({
-                text: `Invoice: ${invoiceNumber} ditemukan!:\n\n---\nStatus Invoice: *${orderStatus}*\n---\nDetail\n---\nCustomer:\n*${name}*\nNomor HP:\n${whatsappNumber}\nProduk:\n*${productName}*\nToken Listrik Pelanggan:\n*${tokenListrikCustomer}*\nBiaya:\n*Rp.${productPrice}*\n---`
-            }, adminJid)
-        }
-        return await instance.sendMessageWTyping({
-            text: `Tidak ditemukan Invoice ID: ${invoiceNumber}`
-        }, adminJid)
+        await onAdminCheckInvoiceAction(instance, data)
+
     } else if (msgTextContent.startsWith("/ascustomer ")) {
         console.log("emulate as client")
         await onMsgFromClient(instance, data)
+
     } else if (msgTextContent.startsWith("/confirminvoice ")) {// "/confirminvoice INV-231231 nomorTokenPerpanjangan"
+        await onAdminConfirmInvoiceAction(instance, data)
 
-        const invoiceNumber = msgTextContent.split(" ")[1]
-        const tokenProduk = msgTextContent.split(" ")[2]
-        const isInvoiceAvailable = await prismaClient.customerOrder.findFirst({
-            where: {
-                invoiceNumber,
-            }
-        })
-
-        if (isInvoiceAvailable && tokenProduk.length > 9) {
-
-            const { productName, productPrice, tokenListrikCustomer, name, whatsappNumber } = isInvoiceAvailable
-
-            await instance.sendMessageWTyping({
-                text: `Invoice dengan ID *${invoiceNumber}* berhasil diproses, detail sedang dikirim menuju client\n\nToken Perpanjangan: ${tokenProduk}`
-            }, adminJid)
-
-            // const customerPhoneNumber = whatsappNumber + "@s.whatsapp.net"
-            await notifyCustomerInvoiceConfirmedAction(instance, isInvoiceAvailable, tokenProduk)
-            return
-        }
-        await instance.sendMessageWTyping({
-            text: `Input Salah!\n\nPastikan Input yang dimasukkan sudah benar\n\nketik /help untuk melihat list perintah`
-        }, adminJid)
-        return
     }
     console.log(`\n\n\n\n\n\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\nMSG MASUK DARI ADMINN ${data.key.remoteJid.split("@")[0]}\n\n\n\n\n\n`)
     // adminTakeOrderAction
@@ -100,7 +69,7 @@ async function onMsgFromClient(instance, data) {
     const isPaidInvoiceConfirmationMsg = msgTextContent.startsWith("Halo Kak\n") && msgTextContent.endsWith("]")
 
     if (msgTextContent.startsWith("/testOrderFinished ")) { // /testOrderFinished Inv-222312
-        await notifyCustomerInvoiceConfirmedAction(instance, newData)
+        // await notifyCustomerInvoiceConfirmedAction(instance, newData)
     } else if (isPaidInvoiceConfirmationMsg) {
         await onPaidInvoiceConfirmation(instance, newData)
     } else {
@@ -112,7 +81,25 @@ async function onMsgFromClient(instance, data) {
     // await notifyCustomerInvoiceConfirmedAction(instance, data)
 }
 
-async function searchInvoiceAction(invoiceNumber) {
+async function onAdminCheckInvoiceAction(instance, data) {
+
+    const msgTextContent = data.message?.extendedTextMessage?.text
+    const adminJid = data.key.remoteJid
+
+    const invoiceNumber = msgTextContent.split(" ")[1]
+    const invoiceDetail = await searchInvoiceService(invoiceNumber)
+    if (invoiceDetail) {
+        const { name, orderStatus, productName, productPrice, tokenListrikCustomer, whatsappNumber } = invoiceDetail
+        return await instance.sendMessageWTyping({
+            text: `Invoice: ${invoiceNumber} ditemukan!:\n\n---\nStatus Invoice: *${orderStatus}*\n---\nDetail\n---\nCustomer:\n*${name}*\nNomor HP:\n${whatsappNumber}\nProduk:\n*${productName}*\nToken Listrik Pelanggan:\n*${tokenListrikCustomer}*\nBiaya:\n*Rp.${productPrice}*\n---`
+        }, adminJid)
+    }
+    return await instance.sendMessageWTyping({
+        text: `Tidak ditemukan Invoice ID: ${invoiceNumber}`
+    },)
+}
+
+async function searchInvoiceService(invoiceNumber) {
     const invoice = await prismaClient.customerOrder.findFirst({
         where: {
             invoiceNumber
@@ -121,8 +108,42 @@ async function searchInvoiceAction(invoiceNumber) {
     return invoice
 }
 
-async function confirmInvoiceAction(params) {
+async function onAdminConfirmInvoiceAction(instance, data) {
 
+    const msgTextContent = data.message?.extendedTextMessage?.text
+    const adminJid = data.key.remoteJid
+
+
+    const invoiceNumber = msgTextContent.split(" ")[1]
+    const tokenProduk = msgTextContent.split(" ")[2]
+
+    const isInvoiceAvailable = await prismaClient.customerOrder.update({
+        where: {
+            invoiceNumber,
+        },
+        data: {
+            orderStatus: 'finished'
+        },
+        select: {
+            productName: true, productPrice: true, tokenListrikCustomer: true, name: true, whatsappNumber: true, invoiceNumber: true
+        }
+    })
+
+    if (isInvoiceAvailable && tokenProduk.length > 9) {
+
+        const { productName, productPrice, tokenListrikCustomer, name, whatsappNumber } = isInvoiceAvailable
+
+        await instance.sendMessageWTyping({
+            text: `Invoice dengan ID *${invoiceNumber}* berhasil diproses, detail sedang dikirim menuju client\n\nPulsa Token: ${tokenProduk}`
+        }, adminJid)
+
+        // const customerPhoneNumber = whatsappNumber + "@s.whatsapp.net"
+        await notifyCustomerInvoiceConfirmedAction(instance, isInvoiceAvailable, tokenProduk)
+        return
+    }
+    await instance.sendMessageWTyping({
+        text: `Input Salah!\n\nPastikan Input yang dimasukkan sudah benar\n\nketik /help untuk melihat list perintah`
+    }, adminJid)
 }
 
 /**
