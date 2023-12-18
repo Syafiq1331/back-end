@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("PRISMA_DB_URL")
+}
+
+model MessageQueue {
+  id                     Int         @id @default(autoincrement())
+  destinationPhoneNumber String      @map("destination_phone_number") @db.VarChar(32)
+  content                String      @db.LongText
+  status                 QueueStatus @default(pending)
+  createdAt              DateTime    @default(now()) @map("created_at")
+  updatedAt              DateTime    @updatedAt @map("updated_at")
+
+  @@map("message_queues")
+}
+
+// a Customer
+model CustomerOrder {
+  id                   Int         @id @default(autoincrement())
+  name                 String      @db.VarChar(255)
+  whatsappNumber       String      @map("whatsapp_number") @db.VarChar(255)
+  tokenListrikCustomer String?     @map("token_listrik_customer") @db.VarChar(64)
+  invoiceNumber        String      @unique @map("invoice_number") @db.VarChar(255)
+  productName          String      @map("product_name") @db.VarChar(255)
+  productPrice         String      @map("product_price") @db.VarChar(32)
+  productId            Int         @map("product_id")
+  productAttachment    String?     @default("") @map("product_attachment")
+  orderStatus          OrderStatus @default(pending) @map("order_status")
+  createdAt            DateTime    @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt            DateTime    @updatedAt @map("updated_at") @db.DateTime(0)
+
+  @@map("customer_orders")
+}
+
+model Note {
+  id          Int      @id @default(autoincrement())
+  title       String?  @db.VarChar(255)
+  description String?  @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+
+  @@map("notes")
+}
+
+model Product {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(255)
+  price         Int
+  exactCost     Int      @map("exact_cost")
+  quantityStock Int      @map("quantity_stock")
+  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  modifiedAt    DateTime @updatedAt @map("modified_at") @db.DateTime(0)
+
+  @@map("products")
+}
+
+model Token {
+  id        Int      @id @default(autoincrement())
+  nama      String   @unique(map: "nama") @db.VarChar(255)
+  price     Int
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+
+  @@map("tokens")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  nama      String   @db.VarChar(255)
+  email     String   @unique(map: "email") @db.VarChar(255)
+  password  String   @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(0)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.DateTime(0)
+
+  @@map("users")
+}
+
+enum OrderStatus {
+  pending
+  processing
+  finished
+}
+
+enum QueueStatus {
+  pending
+  delivered
+
+  @@map("queue_statuses")
+}
